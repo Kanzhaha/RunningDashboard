@@ -59,7 +59,7 @@ export const Dashboard: React.FC = () => {
     stopTracking();
     disconnect();
   };
-}, [isRunning, connect, disconnect]);
+}, [isRunning, connect, disconnect, startTracking, stopTracking]);
 
 useEffect(() => {
   if (gpsData.speed != null && wsState.isConnected) {

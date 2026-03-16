@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, CheckCircle, AlertTriangle, Zap } from 'lucide-react';
+import { AlertCircle, CheckCircle, AlertTriangle} from 'lucide-react';
 import { FatigueStatus } from '../../types';
 
 interface Props {
