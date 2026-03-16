@@ -46,10 +46,18 @@ export const Dashboard: React.FC = () => {
     navigate('/');
   };
 
-  useEffect(() => {
+useEffect(() => {
+  const isHttpsPage = window.location.protocol === 'https:';
+  const wsUrl = process.env.REACT_APP_ESP_WS_URL || '';
+  const isInsecureWs = wsUrl.startsWith('ws://');
+
   if (isRunning) {
-    connect();
     startTracking();
+
+    // Hanya connect ke ESP kalau tidak bentrok HTTPS -> ws://
+    if (!(isHttpsPage && isInsecureWs)) {
+      connect();
+    }
   } else {
     stopTracking();
     disconnect();

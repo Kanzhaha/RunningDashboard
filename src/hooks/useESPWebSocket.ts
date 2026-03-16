@@ -31,6 +31,14 @@ export const useESPWebSocket = () => {
     }
 
     const socket = new WebSocket(WS_URL);
+    if (window.location.protocol === 'https:' && WS_URL.startsWith('ws://')) {
+  setWsState((prev) => ({
+    ...prev,
+    error: 'Blocked: HTTPS page cannot open insecure ws:// connection',
+    isConnected: false,
+  }));
+  return;
+}
     socketRef.current = socket;
 
     socket.onopen = () => {
