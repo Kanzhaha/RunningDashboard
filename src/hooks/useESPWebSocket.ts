@@ -26,54 +26,65 @@ export const useESPWebSocket = () => {
       return;
     }
 
+    // Cegah HTTPS page membuka ws:// yang insecure
+    if (window.location.protocol === 'https:' && WS_URL.startsWith('ws://')) {
+      setWsState((prev) => ({
+        ...prev,
+        error: 'Blocked: HTTPS page cannot open insecure ws:// connection',
+        isConnected: false,
+      }));
+      return;
+    }
+
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       return;
     }
 
-    const socket = new WebSocket(WS_URL);
-    if (window.location.protocol === 'https:' && WS_URL.startsWith('ws://')) {
-  setWsState((prev) => ({
-    ...prev,
-    error: 'Blocked: HTTPS page cannot open insecure ws:// connection',
-    isConnected: false,
-  }));
-  return;
-}
-    socketRef.current = socket;
+    try {
+      const socket = new WebSocket(WS_URL);
+      socketRef.current = socket;
 
-    socket.onopen = () => {
-      console.log('[WS] connected');
-      setWsState({
-        isConnected: true,
-        lastMessage: null,
-        error: null,
-      });
-    };
+      socket.onopen = () => {
+        console.log('[WS] connected');
+        setWsState({
+          isConnected: true,
+          lastMessage: null,
+          error: null,
+        });
+      };
 
-    socket.onmessage = (event) => {
-      console.log('[WS] message:', event.data);
-      setWsState((prev) => ({
-        ...prev,
-        lastMessage: String(event.data),
-      }));
-    };
+      socket.onmessage = (event) => {
+        console.log('[WS] message:', event.data);
+        setWsState((prev) => ({
+          ...prev,
+          lastMessage: String(event.data),
+        }));
+      };
 
-    socket.onerror = () => {
-      console.log('[WS] error');
+      socket.onerror = () => {
+        console.log('[WS] error');
+        setWsState((prev) => ({
+          ...prev,
+          isConnected: false,
+          error: 'WebSocket error. Cek IP ESP / Wi-Fi',
+        }));
+      };
+
+      socket.onclose = () => {
+        console.log('[WS] closed');
+        setWsState((prev) => ({
+          ...prev,
+          isConnected: false,
+        }));
+      };
+    } catch (err) {
+      console.log('[WS] failed to create socket', err);
       setWsState((prev) => ({
         ...prev,
         isConnected: false,
-        error: 'WebSocket error. Cek IP ESP / Wi-Fi',
+        error: 'Failed to create WebSocket connection',
       }));
-    };
-
-    socket.onclose = () => {
-      console.log('[WS] closed');
-      setWsState((prev) => ({
-        ...prev,
-        isConnected: false,
-      }));
-    };
+    }
   }, []);
 
   const disconnect = useCallback(() => {
@@ -81,6 +92,7 @@ export const useESPWebSocket = () => {
       socketRef.current.close();
       socketRef.current = null;
     }
+
     setWsState((prev) => ({
       ...prev,
       isConnected: false,
@@ -100,7 +112,9 @@ export const useESPWebSocket = () => {
 
   useEffect(() => {
     return () => {
-      if (socketRef.current) socketRef.current.close();
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
     };
   }, []);
 
